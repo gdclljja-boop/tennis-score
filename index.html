@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tennis Score Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --court: #2d5a1b;
+    --line: #e8e0c8;
+    --accent: #f5c842;
+    --accent2: #e84545;
+    --text: #f0ece0;
+    --dim: #888;
+    --serve: #4fc3f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--court);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(90deg, transparent 49.5%, rgba(232,224,200,0.15) 49.5%, rgba(232,224,200,0.15) 50.5%, transparent 50.5%),
+      linear-gradient(0deg, transparent 33%, rgba(232,224,200,0.1) 33%, rgba(232,224,200,0.1) 33.5%, transparent 33.5%),
+      linear-gradient(0deg, transparent 66%, rgba(232,224,200,0.1) 66%, rgba(232,224,200,0.1) 66.5%, transparent 66.5%);
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    border: 12px solid rgba(232,224,200,0.15);
+    pointer-events: none;
+  }
+
+  /* ── SETUP ── */
+  #setup-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    padding: 32px 24px;
+    max-width: 420px;
+    width: 100%;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .app-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: clamp(52px, 15vw, 88px);
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+    line-height: 1;
+    text-align: center;
+  }
+
+  .app-subtitle {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: -20px;
+  }
+
+  .setup-card {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(232,224,200,0.2);
+    border-radius: 4px;
+    padding: 28px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .setup-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 8px;
+  }
+
+  .name-input {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(232,224,200,0.25);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    padding: 10px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .name-input:focus { border-color: var(--accent); }
+  .name-input::placeholder { color: rgba(240,236,224,0.3); }
+
+  .serve-choice { display: flex; flex-direction: column; gap: 10px; }
+
+  .serve-btn {
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(232,224,200,0.2);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .serve-btn:hover { background: rgba(245,200,66,0.15); border-color: var(--accent); }
+  .serve-btn.selected { background: rgba(245,200,66,0.2); border-color: var(--accent); color: var(--accent); }
+  .serve-btn .icon { font-size: 20px; }
+
+  .start-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 3px;
+    color: #1a1a1a;
+    cursor: pointer;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 28px;
+    letter-spacing: 4px;
+    padding: 16px 32px;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .start-btn:hover { background: #ffd700; transform: translateY(-1px); }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── GAME SCREEN ── */
+  #game-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 16px;
+    gap: 16px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .sets-display {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    width: 100%;
+  }
+  .sets-display .sets-row { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sets-display .player-name-small {
+    font-size: 10px; letter-spacing: 2px; color: var(--dim);
+    text-transform: uppercase; font-family: 'DM Mono', monospace;
+  }
+  .sets-display .set-scores { display: flex; gap: 8px; }
+  .set-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(232,224,200,0.2);
+    border-radius: 2px;
+    padding: 4px 10px;
+    font-size: 20px;
+    font-family: 'Bebas Neue', cursive;
+    min-width: 36px;
+    text-align: center;
+    color: var(--line);
+  }
+  .set-box.current { border-color: rgba(245,200,66,0.4); }
+  .set-box.won { border-color: var(--accent); color: var(--accent); }
+
+  .scoreboard {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(232,224,200,0.25);
+    border-radius: 4px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr;
+    align-items: center;
+    padding: 0 12px;
+  }
+  .score-row:first-child { border-bottom: 1px solid rgba(232,224,200,0.1); }
+
+  .player-side {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 8px; gap: 6px; cursor: pointer;
+    transition: background 0.15s; border-radius: 3px;
+  }
+  .player-side:active { background: rgba(255,255,255,0.08); }
+
+  .player-name { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim); text-align: center; }
+
+  .game-score {
+    font-family: 'Bebas Neue', cursive;
+    font-size: clamp(64px, 18vw, 96px);
+    line-height: 1; color: var(--line); transition: all 0.2s;
+  }
+
+  .serve-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--serve); box-shadow: 0 0 8px var(--serve);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .serve-dot.visible { opacity: 1; }
+
+  .vs-divider {
+    font-family: 'Bebas Neue', cursive; font-size: 16px;
+    letter-spacing: 2px; color: rgba(232,224,200,0.3); text-align: center;
+  }
+
+  .game-points-row {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    padding: 10px 20px; border-top: 1px solid rgba(232,224,200,0.1);
+    align-items: center; background: rgba(0,0,0,0.2);
+  }
+  .game-point { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); text-align: center; }
+  .game-points-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(136,136,136,0.5); text-align: center; }
+
+  /* ── TIEBREAK BANNER ── */
+  #tiebreak-banner {
+    display: none;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(245,200,66,0.4);
+    border-radius: 4px;
+    padding: 14px 18px;
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+  #tiebreak-banner .tb-label {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); text-align: center;
+  }
+  #tiebreak-banner .tb-options { display: flex; gap: 10px; justify-content: center; }
+  .tb-btn {
+    background: rgba(245,200,66,0.1);
+    border: 2px solid rgba(245,200,66,0.3);
+    border-radius: 3px; color: var(--text); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 2px;
+    padding: 10px 20px; transition: all 0.15s; flex: 1; text-align: center;
+  }
+  .tb-btn:hover { background: rgba(245,200,66,0.25); border-color: var(--accent); color: var(--accent); }
+  .tb-dismiss {
+    background: none; border: none; color: var(--dim); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    text-align: center; padding: 2px; text-transform: uppercase;
+  }
+
+  #tiebreak-mode-label {
+    display: none; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); text-align: center; padding: 4px 0; animation: fadeIn 0.3s ease;
+  }
+
+  .controls { display: flex; gap: 12px; width: 100%; justify-content: center; }
+
+  .ctrl-btn {
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(232,224,200,0.2);
+    border-radius: 3px; color: var(--text); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
+    padding: 10px 16px; transition: all 0.15s; text-transform: uppercase;
+  }
+  .ctrl-btn:hover { border-color: rgba(232,224,200,0.5); background: rgba(255,255,255,0.07); }
+  .undo-btn { color: var(--dim); }
+  .reset-btn { color: var(--accent2); border-color: rgba(232,68,69,0.3); }
+  .reset-btn:hover { border-color: var(--accent2); background: rgba(232,68,69,0.1); }
+
+  .keyboard-hint { font-size: 10px; letter-spacing: 2px; color: rgba(136,136,136,0.6); text-align: center; }
+  .keyboard-hint span { color: rgba(136,136,136,0.9); }
+
+  /* ── ANNOUNCEMENT ── */
+  #announcement {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    font-family: 'Bebas Neue', cursive;
+    font-size: clamp(36px, 10vw, 60px);
+    letter-spacing: 6px; text-align: center; color: var(--accent);
+    text-shadow: 0 0 40px rgba(245,200,66,0.6), 3px 3px 0 rgba(0,0,0,0.5);
+    opacity: 0; pointer-events: none; z-index: 100;
+    background: rgba(0,0,0,0.75); padding: 24px 40px;
+    border-radius: 4px; border: 1px solid rgba(245,200,66,0.4);
+    max-width: 90vw; line-height: 1.2;
+  }
+  #announcement.show { animation: announceAnim 2.2s ease forwards; }
+
+  /* ── WIN SCREEN ── */
+  #win-screen {
+    display: none; flex-direction: column; align-items: center;
+    gap: 24px; padding: 40px 24px; text-align: center; animation: fadeIn 0.6s ease;
+  }
+  .win-trophy { font-size: 72px; animation: bounce 1s ease infinite alternate; }
+  .win-title { font-family: 'Bebas Neue', cursive; font-size: 56px; letter-spacing: 4px; color: var(--accent); }
+  .win-subtitle { font-size: 14px; letter-spacing: 3px; color: var(--dim); text-transform: uppercase; }
+  .win-score { font-family: 'Bebas Neue', cursive; font-size: 28px; color: var(--line); letter-spacing: 3px; }
+  .new-match-btn {
+    background: var(--accent); border: none; border-radius: 3px; color: #1a1a1a;
+    cursor: pointer; font-family: 'Bebas Neue', cursive; font-size: 24px;
+    letter-spacing: 3px; padding: 14px 32px; margin-top: 8px;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes announceAnim {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    25%  { transform: translate(-50%, -50%) scale(1); }
+    75%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div>
+    <div class="app-title">TENNIS</div>
+    <div class="app-subtitle">Score Tracker</div>
+  </div>
+  <div class="setup-card">
+    <div>
+      <div class="setup-label">Your Name</div>
+      <input class="name-input" id="player1-name" type="text" placeholder="Player 1" maxlength="16">
+    </div>
+    <div>
+      <div class="setup-label">Opponent Name</div>
+      <input class="name-input" id="player2-name" type="text" placeholder="Opponent" maxlength="16">
+    </div>
+    <div>
+      <div class="setup-label">Who serves first?</div>
+      <div class="serve-choice">
+        <button class="serve-btn" id="btn-serve-me" onclick="selectServe('me')">
+          <span class="icon">🎾</span> I serve first
+        </button>
+        <button class="serve-btn" id="btn-serve-opp" onclick="selectServe('opponent')">
+          <span class="icon">↩️</span> Opponent serves first
+        </button>
+      </div>
+    </div>
+  </div>
+  <button class="start-btn" id="start-btn" onclick="startMatch()" disabled>START MATCH</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <div class="sets-display">
+    <div class="sets-row">
+      <div class="player-name-small" id="sets-p1-name">P1</div>
+      <div class="set-scores" id="sets-p1"></div>
+    </div>
+    <div class="sets-row">
+      <div class="player-name-small" id="sets-p2-name">P2</div>
+      <div class="set-scores" id="sets-p2"></div>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-row">
+      <div class="player-side" id="side-me" onclick="awardPoint('me')">
+        <div class="serve-dot" id="dot-me"></div>
+        <div class="game-score" id="score-me">0</div>
+        <div class="player-name" id="name-me">Player 1</div>
+      </div>
+      <div class="vs-divider">VS</div>
+      <div class="player-side" id="side-opp" onclick="awardPoint('opponent')">
+        <div class="serve-dot" id="dot-opp"></div>
+        <div class="game-score" id="score-opp">0</div>
+        <div class="player-name" id="name-opp">Opponent</div>
+      </div>
+    </div>
+    <div class="game-points-row">
+      <div class="game-point" id="games-me">0</div>
+      <div class="game-points-label" id="games-label">GAMES</div>
+      <div class="game-point" id="games-opp">0</div>
+    </div>
+  </div>
+
+  <div id="tiebreak-mode-label"></div>
+
+  <div id="tiebreak-banner">
+    <div class="tb-label">Play a Tie Break?</div>
+    <div class="tb-options">
+      <button class="tb-btn" onclick="startTiebreak(7)">7 Point</button>
+      <button class="tb-btn" onclick="startTiebreak(10)">10 Point</button>
+    </div>
+    <button class="tb-dismiss" onclick="dismissTiebreak()">No thanks — play normal game</button>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn undo-btn" onclick="undoPoint()">↩ UNDO</button>
+    <button class="ctrl-btn reset-btn" onclick="confirmReset()">✕ RESET</button>
+  </div>
+  <div class="keyboard-hint">
+    <span>Small btn / ↓</span> = Your point &nbsp;|&nbsp; <span>Large btn / ↑</span> = Opponent's point
+  </div>
+</div>
+
+<!-- WIN SCREEN -->
+<div id="win-screen">
+  <div class="win-trophy">🏆</div>
+  <div class="win-title" id="win-player-name"></div>
+  <div class="win-subtitle">wins the match</div>
+  <div class="win-score" id="win-score-summary"></div>
+  <button class="new-match-btn" onclick="confirmReset()">NEW MATCH</button>
+</div>
+
+<div id="announcement"></div>
+
+<script>
+const POINTS      = ['0','15','30','40'];
+const POINT_WORDS = { '0':'Love', '15':'Fifteen', '30':'Thirty', '40':'Forty' };
+const NUM_WORDS   = ['Love','One','Two','Three','Four','Five','Six','Seven','Eight',
+                     'Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen'];
+
+let state = {
+  meServeFirst: true, serverIsMe: true,
+  p1Name: 'Player 1', p2Name: 'Opponent',
+  mePoints: 0, oppPoints: 0,
+  meGames: 0,  oppGames: 0,
+  meSets: [],  oppSets: [],
+  inDeuce: false, meAdvantage: false, oppAdvantage: false,
+  inTiebreak: false, tbTarget: 0,
+  meTbPoints: 0, oppTbPoints: 0,
+  tbServerIsMe: true, tbPointCount: 0,
+  awaitingNextGame: false,
+  history: [], setsTarget: 2,
+};
+
+let serveChoice = null;
+
+// ── SETUP ──
+function selectServe(who) {
+  serveChoice = who;
+  document.getElementById('btn-serve-me').classList.toggle('selected', who === 'me');
+  document.getElementById('btn-serve-opp').classList.toggle('selected', who === 'opponent');
+  checkStartReady();
+}
+['player1-name','player2-name'].forEach(id =>
+  document.getElementById(id).addEventListener('input', checkStartReady)
+);
+function checkStartReady() {
+  document.getElementById('start-btn').disabled = serveChoice === null;
+}
+
+function startMatch() {
+  const p1 = document.getElementById('player1-name').value.trim() || 'Me';
+  const p2 = document.getElementById('player2-name').value.trim() || 'Opponent';
+  state.p1Name = p1; state.p2Name = p2;
+  state.meServeFirst = serveChoice === 'me';
+  state.serverIsMe   = state.meServeFirst;
+  resetScores();
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display  = 'flex';
+  document.getElementById('win-screen').style.display   = 'none';
+  document.getElementById('name-me').textContent      = p1.toUpperCase();
+  document.getElementById('name-opp').textContent     = p2.toUpperCase();
+  document.getElementById('sets-p1-name').textContent = p1.toUpperCase();
+  document.getElementById('sets-p2-name').textContent = p2.toUpperCase();
+  updateDisplay();
+  speakScore(true);
+  showTiebreakBanner();
+}
+
+function resetScores() {
+  Object.assign(state, {
+    mePoints: 0, oppPoints: 0, meGames: 0, oppGames: 0,
+    meSets: [], oppSets: [], inDeuce: false,
+    meAdvantage: false, oppAdvantage: false,
+    inTiebreak: false, tbTarget: 0, meTbPoints: 0, oppTbPoints: 0,
+    tbPointCount: 0, awaitingNextGame: false, history: [],
+  });
+  state.serverIsMe = state.meServeFirst;
+  hideTiebreakBanner(); hideTiebreakLabel();
+}
+
+// ── TIEBREAK UI ──
+function showTiebreakBanner() {
+  state.awaitingNextGame = true;
+  document.getElementById('tiebreak-banner').style.display = 'flex';
+}
+function hideTiebreakBanner() {
+  state.awaitingNextGame = false;
+  document.getElementById('tiebreak-banner').style.display = 'none';
+}
+function dismissTiebreak() { hideTiebreakBanner(); }
+
+function showTiebreakLabel(target) {
+  const el = document.getElementById('tiebreak-mode-label');
+  el.textContent = `— ${target} POINT TIE BREAK —`;
+  el.style.display = 'block';
+}
+function hideTiebreakLabel() {
+  document.getElementById('tiebreak-mode-label').style.display = 'none';
+}
+
+function startTiebreak(target) {
+  hideTiebreakBanner();
+  Object.assign(state, {
+    inTiebreak: true, tbTarget: target,
+    meTbPoints: 0, oppTbPoints: 0, tbPointCount: 0,
+    tbServerIsMe: state.serverIsMe,
+  });
+  showTiebreakLabel(target);
+  updateDisplay();
+  speak(`${target} point tie break. ${state.serverIsMe ? state.p1Name : state.p2Name} to serve.`);
+  announce('TIE BREAK', true);
+}
+
+// ── AWARD POINT ──
+function awardPoint(who) {
+  // If the tiebreak banner is showing, pressing a score button means "no tiebreak" — dismiss and continue
+  if (state.awaitingNextGame) hideTiebreakBanner();
+  const snapshot = JSON.parse(JSON.stringify(state));
+  snapshot.history = [];
+  state.history.push(snapshot);
+  state.inTiebreak ? awardTiebreakPoint(who) : awardNormalPoint(who);
+}
+
+function awardNormalPoint(who) {
+  const me = who === 'me';
+  if (state.inDeuce) {
+    if (me) {
+      if (state.oppAdvantage)      state.oppAdvantage = false;
+      else if (state.meAdvantage)  { winGame('me'); return; }
+      else                          state.meAdvantage = true;
+    } else {
+      if (state.meAdvantage)       state.meAdvantage = false;
+      else if (state.oppAdvantage) { winGame('opponent'); return; }
+      else                          state.oppAdvantage = true;
+    }
+    updateDisplay(); speakScore(); return;
+  }
+  if (me) state.mePoints++; else state.oppPoints++;
+  if (state.mePoints === 3 && state.oppPoints === 3) {
+    state.inDeuce = true; updateDisplay(); speakScore(); return;
+  }
+  if (state.mePoints  === 4) { winGame('me');       return; }
+  if (state.oppPoints === 4) { winGame('opponent'); return; }
+  updateDisplay(); speakScore();
+}
+
+function awardTiebreakPoint(who) {
+  const me = who === 'me';
+  if (me) state.meTbPoints++; else state.oppTbPoints++;
+  state.tbPointCount++;
+
+  // Serve rotation: 1st player serves 1, then alternate every 2
+  if (state.tbPointCount === 1) {
+    state.serverIsMe = !state.tbServerIsMe;
+  } else if (state.tbPointCount > 1 && (state.tbPointCount - 1) % 2 === 0) {
+    state.serverIsMe = !state.serverIsMe;
+  }
+
+  const t = state.tbTarget, myP = state.meTbPoints, oppP = state.oppTbPoints;
+  if (myP  >= t && myP  - oppP >= 2) { winTiebreak('me');       return; }
+  if (oppP >= t && oppP - myP  >= 2) { winTiebreak('opponent'); return; }
+  updateDisplay(); speakTiebreak();
+}
+
+// ── WIN GAME ──
+function winGame(who) {
+  const me = who === 'me';
+  if (me) state.meGames++; else state.oppGames++;
+  state.mePoints = 0; state.oppPoints = 0;
+  state.inDeuce = false; state.meAdvantage = false; state.oppAdvantage = false;
+
+  const setWinner = checkSetWin();
+  if (setWinner !== null) { handleSetWin(setWinner); return; }
+
+  state.serverIsMe = !state.serverIsMe;
+  updateDisplay();
+  speakScore(false, false, null, who);
+  showTiebreakBanner();
+}
+
+// ── WIN TIEBREAK ──
+function winTiebreak(who) {
+  const me = who === 'me';
+  const myTb = state.meTbPoints, oppTb = state.oppTbPoints;
+  if (me) state.meGames++; else state.oppGames++;
+
+  const tbServerWasMe = state.tbServerIsMe;
+  Object.assign(state, {
+    inTiebreak: false, tbTarget: 0,
+    meTbPoints: 0, oppTbPoints: 0, tbPointCount: 0,
+    mePoints: 0, oppPoints: 0,
+    inDeuce: false, meAdvantage: false, oppAdvantage: false,
+  });
+  hideTiebreakLabel();
+
+  const winnerName = me ? state.p1Name : state.p2Name;
+  const myScore  = me ? myTb  : oppTb;
+  const oppScore = me ? oppTb : myTb;
+  speak(`Tie break to ${winnerName}, ${myScore} points to ${oppScore}.`);
+  announce(`TIE BREAK\n${winnerName.toUpperCase()}`, true);
+
+  const setWinner = checkSetWin(true);
+  if (setWinner !== null) { updateDisplay(); handleSetWin(setWinner); return; }
+
+  // Player who received first in TB serves first next game
+  state.serverIsMe = !tbServerWasMe;
+  updateDisplay();
+  showTiebreakBanner();
+}
+
+// ── SET WIN ──
+function checkSetWin(afterTiebreak = false) {
+  const mg = state.meGames, og = state.oppGames;
+  // After a tiebreak the winner has exactly one more game — end the set immediately
+  if (afterTiebreak) {
+    if (mg > og) return 'me';
+    if (og > mg) return 'opponent';
+  }
+  // Set ends when a player reaches 6+ and leads by 2
+  if (mg >= 6 && mg - og >= 2) return 'me';
+  if (og >= 6 && og - mg >= 2) return 'opponent';
+  return null;
+}
+
+function handleSetWin(setWinner) {
+  state.meSets.push(state.meGames);
+  state.oppSets.push(state.oppGames);
+  const meSetsWon  = state.meSets.filter((s, i) => s > state.oppSets[i]).length;
+  const oppSetsWon = state.oppSets.filter((s, i) => s > state.meSets[i]).length;
+  if (meSetsWon  >= state.setsTarget) { updateDisplay(); endMatch('me');       return; }
+  if (oppSetsWon >= state.setsTarget) { updateDisplay(); endMatch('opponent'); return; }
+  state.meGames = 0; state.oppGames = 0;
+  state.serverIsMe = !state.serverIsMe;
+  updateDisplay();
+  speakScore(false, true, setWinner);
+  showTiebreakBanner();
+}
+
+// ── UNDO ──
+function undoPoint() {
+  if (state.history.length === 0) return;
+  const history = [...state.history];
+  const prev = history.pop();
+  prev.history = history;
+  Object.assign(state, prev);
+  hideTiebreakBanner(); hideTiebreakLabel();
+  if (state.inTiebreak) showTiebreakLabel(state.tbTarget);
+  if (state.awaitingNextGame) showTiebreakBanner();
+  updateDisplay();
+  announce('UNDO', false);
+}
+
+function confirmReset() {
+  if (confirm('Start a new match?')) {
+    document.getElementById('game-screen').style.display  = 'none';
+    document.getElementById('win-screen').style.display   = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+    serveChoice = null;
+    document.getElementById('btn-serve-me').classList.remove('selected');
+    document.getElementById('btn-serve-opp').classList.remove('selected');
+    checkStartReady();
+  }
+}
+
+function endMatch(winner) {
+  const name   = winner === 'me' ? state.p1Name : state.p2Name;
+  const setStr = state.meSets.map((s, i) => `${s}–${state.oppSets[i]}`).join('  ');
+  document.getElementById('win-player-name').textContent  = name.toUpperCase();
+  document.getElementById('win-score-summary').textContent = setStr;
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('win-screen').style.display  = 'flex';
+  speak(`Match over! ${name} wins!`);
+  announce(`${name.toUpperCase()} WINS!`, true);
+}
+
+// ── DISPLAY ──
+function updateDisplay() {
+  let meLabel, oppLabel;
+  if (state.inTiebreak) {
+    meLabel = String(state.meTbPoints); oppLabel = String(state.oppTbPoints);
+  } else if (state.inDeuce) {
+    if (state.meAdvantage)       { meLabel = 'ADV'; oppLabel = '—'; }
+    else if (state.oppAdvantage) { meLabel = '—';   oppLabel = 'ADV'; }
+    else                          { meLabel = 'DUC'; oppLabel = 'DUC'; }
+  } else {
+    meLabel  = POINTS[state.mePoints]  || '0';
+    oppLabel = POINTS[state.oppPoints] || '0';
+  }
+  document.getElementById('score-me').textContent  = meLabel;
+  document.getElementById('score-opp').textContent = oppLabel;
+  document.getElementById('games-me').textContent  = state.meGames;
+  document.getElementById('games-opp').textContent = state.oppGames;
+  document.getElementById('dot-me').classList.toggle('visible',  state.serverIsMe);
+  document.getElementById('dot-opp').classList.toggle('visible', !state.serverIsMe);
+
+  let p1Html = '', p2Html = '';
+  for (let i = 0; i < state.meSets.length; i++) {
+    const meW  = state.meSets[i] > state.oppSets[i];
+    const oppW = state.oppSets[i] > state.meSets[i];
+    p1Html += `<div class="set-box ${meW  ? 'won' : ''}">${state.meSets[i]}</div>`;
+    p2Html += `<div class="set-box ${oppW ? 'won' : ''}">${state.oppSets[i]}</div>`;
+  }
+  p1Html += `<div class="set-box current">${state.meGames}</div>`;
+  p2Html += `<div class="set-box current">${state.oppGames}</div>`;
+  document.getElementById('sets-p1').innerHTML = p1Html;
+  document.getElementById('sets-p2').innerHTML = p2Html;
+}
+
+// ── SPEECH ──
+const toWord = n => NUM_WORDS[n] ?? String(n);
+
+function speakTiebreak() {
+  const myP = state.meTbPoints, oppP = state.oppTbPoints;
+  let text;
+  if (myP === oppP) {
+    text = `${toWord(myP)} all`;
+  } else {
+    const svrPts = state.serverIsMe ? myP  : oppP;
+    const rcvPts = state.serverIsMe ? oppP : myP;
+    text = `${toWord(svrPts)} ${toWord(rcvPts)}`;
+  }
+  announce(text.toUpperCase(), false);
+  speak(text);
+}
+
+function speakScore(isStart = false, isSet = false, setWinner = null, isGame = false) {
+  let text = '';
+
+  if (isStart) {
+    const server = state.serverIsMe ? state.p1Name : state.p2Name;
+    announce(`${server.toUpperCase()} SERVES`, false);
+    speak(`New match. ${server} to serve.`); return;
+  }
+
+  if (isSet) {
+    const name = setWinner === 'me' ? state.p1Name : state.p2Name;
+    const idx  = state.meSets.length - 1;
+    const meS  = state.meSets[idx], oppS = state.oppSets[idx];
+    announce(`SET TO ${name.toUpperCase()}`, true);
+    speak(`Set to ${name}, ${meS} games to ${oppS}.`); return;
+  }
+
+  if (isGame) {
+    const gameWinner = isGame === 'me' ? state.p1Name : state.p2Name;
+    const g1 = state.meGames, g2 = state.oppGames;
+    let gamesText;
+    if (g1 === g2) {
+      gamesText = `The games are ${toWord(g1)} all.`;
+    } else {
+      const leaderName  = g1 > g2 ? state.p1Name : state.p2Name;
+      const leaderScore = toWord(g1 > g2 ? g1 : g2);
+      const trailScore  = toWord(g1 > g2 ? g2 : g1);
+      gamesText = `${leaderName} leads ${leaderScore} games to ${trailScore}.`;
+    }
+    announce(`GAME ${gameWinner.toUpperCase()}`, true);
+    speak(`Game ${gameWinner}. ${gamesText}`); return;
+  }
+
+  // Normal point
+  if (state.inDeuce) {
+    if (state.meAdvantage) {
+      text = state.serverIsMe ? 'Advantage Server' : 'Advantage Receiver';
+      announce('ADVANTAGE', false);
+    } else if (state.oppAdvantage) {
+      text = state.serverIsMe ? 'Advantage Receiver' : 'Advantage Server';
+      announce('ADVANTAGE', false);
+    } else {
+      text = 'Deuce'; announce('DEUCE', false);
+    }
+  } else {
+    if (state.mePoints === state.oppPoints && state.mePoints > 0) {
+      text = `${POINT_WORDS[POINTS[state.mePoints]]} All`;
+      announce(text.toUpperCase(), false);
+    } else {
+      const svrPts  = state.serverIsMe ? state.mePoints  : state.oppPoints;
+      const rcvPts  = state.serverIsMe ? state.oppPoints : state.mePoints;
+      text = `${POINT_WORDS[POINTS[svrPts]] || 'Love'} ${POINT_WORDS[POINTS[rcvPts]] || 'Love'}`;
+      announce(text.toUpperCase(), false);
+    }
+  }
+  speak(text);
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = 1.0; utt.pitch = 1.0; utt.volume = 1.0;
+  window.speechSynthesis.speak(utt);
+}
+
+function announce(text, big) {
+  const el = document.getElementById('announcement');
+  el.textContent = text;
+  el.style.fontSize = big ? 'clamp(40px, 11vw, 68px)' : 'clamp(28px, 8vw, 50px)';
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+// ── CONTROLS ──
+document.addEventListener('keydown', (e) => {
+  const onGame = document.getElementById('game-screen').style.display !== 'none';
+  if (!onGame) return;
+  if (e.key === 'Enter')                                 { e.preventDefault(); awardPoint('me'); }
+  if (e.key === 'AudioVolumeUp' || e.key === 'VolumeUp') { e.preventDefault(); awardPoint('opponent'); }
+  if (e.key === 'ArrowDown')                             { e.preventDefault(); awardPoint('me'); }
+  if (e.key === 'ArrowUp')                               { e.preventDefault(); awardPoint('opponent'); }
+  if (e.key === 'z' || e.key === 'Z')                    undoPoint();
+});
+
+let lastGamepadState = {};
+function pollGamepad() {
+  const onGame = document.getElementById('game-screen').style.display !== 'none';
+  const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (let gp of gamepads) {
+    if (!gp) continue;
+    gp.buttons.forEach((btn, i) => {
+      const key = `${gp.index}-${i}`;
+      const was = lastGamepadState[key];
+      if (btn.pressed && !was && onGame) {
+        if (i === 13 || i === 0) awardPoint('me');
+        if (i === 12 || i === 1) awardPoint('opponent');
+      }
+      lastGamepadState[key] = btn.pressed;
+    });
+  }
+  requestAnimationFrame(pollGamepad);
+}
+requestAnimationFrame(pollGamepad);
+</script>
+</body>
+</html>
