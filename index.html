@@ -781,6 +781,17 @@ function undoPoint() {
   announce('UNDO', false);
 }
 
+function reannounceScore() {
+  // Re-speak the current score after an undo
+  setTimeout(() => {
+    if (state.inTiebreak) {
+      speakTiebreak();
+    } else {
+      speakScore();
+    }
+  }, 600); // short pause after "UNDO" announcement
+}
+
 function confirmReset() {
   if (confirm('Start a new match?')) {
     document.getElementById('game-screen').style.display  = 'none';
@@ -812,7 +823,7 @@ function updateDisplay() {
   } else if (state.inDeuce) {
     if (state.meAdvantage)       { meLabel = 'ADV'; oppLabel = '—'; }
     else if (state.oppAdvantage) { meLabel = '—';   oppLabel = 'ADV'; }
-    else                          { meLabel = 'DUC'; oppLabel = 'DUC'; }
+    else                          { meLabel = 'DEUCE'; oppLabel = 'DEUCE'; }
   } else {
     meLabel  = POINTS[state.mePoints]  || '0';
     oppLabel = POINTS[state.oppPoints] || '0';
@@ -965,7 +976,8 @@ function handleRemoteClick() {
     const onGame = document.getElementById('game-screen').style.display !== 'none';
     if (!onGame) return;
     if (count === 1) awardPoint('me');
-    if (count >= 2) awardPoint('opponent');
+    if (count === 2) awardPoint('opponent');
+    if (count >= 3) { undoPoint(); reannounceScore(); }
   }, 400);
 }
 
