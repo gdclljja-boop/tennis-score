@@ -14,6 +14,9 @@
     --text: #f0ece0;
     --dim: #888;
     --serve: #4fc3f7;
+    --blue: #0057b8;
+    --blue-dark: #003d8a;
+    --blue-light: #1a6fd4;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -164,6 +167,7 @@
     animation: fadeIn 0.4s ease;
   }
 
+  /* Portrait: standard sets display */
   .sets-display {
     display: flex;
     justify-content: center;
@@ -240,6 +244,114 @@
   }
   .game-point { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); text-align: center; }
   .game-points-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(136,136,136,0.5); text-align: center; }
+
+  /* Inline game count — hidden in portrait, positioned in corners in landscape */
+  .game-count-inline {
+    display: none;
+    font-family: 'Bebas Neue', cursive;
+    position: absolute;
+    bottom: 10px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1;
+  }
+  #games-me-inline  { left:  12px; }
+  #games-opp-inline { right: 12px; }
+
+  /* ── LANDSCAPE LAYOUT ── */
+  @media (orientation: landscape) and (max-height: 500px) {
+    body { background: var(--blue); justify-content: center; }
+
+    body::before { display: none; }
+    body::after  { display: none; }
+
+    #game-screen {
+      max-width: 100%;
+      padding: 6px 10px;
+      gap: 6px;
+      flex-direction: column;
+      height: 100vh;
+      justify-content: center;
+    }
+
+    /* Sets row compact across top */
+    .sets-display {
+      gap: 12px;
+      justify-content: center;
+    }
+    .sets-display .player-name-small { font-size: 9px; }
+    .set-box { font-size: 16px; padding: 2px 8px; min-width: 28px; }
+
+    /* Scoreboard: two giant panels side by side */
+    .scoreboard {
+      background: none;
+      border: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .score-row {
+      display: contents; /* let children slot into grid */
+    }
+    .score-row:first-child { border-bottom: none; }
+
+    .player-side {
+      background: var(--blue-dark);
+      border-radius: 8px;
+      padding: 8px 12px;
+      gap: 2px;
+      border: 2px solid rgba(255,255,255,0.15);
+    }
+    .player-side:active { background: var(--blue-light); }
+
+    .game-score {
+      font-size: clamp(72px, 20vw, 140px);
+      color: #ffffff;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    .player-name {
+      font-size: 10px;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 2px;
+    }
+
+    .serve-dot {
+      width: 8px; height: 8px;
+      background: #ffeb3b;
+      box-shadow: 0 0 8px #ffeb3b;
+    }
+
+    /* Hide the games row in landscape — shown inline inside score panels instead */
+    .game-points-row { display: none; }
+
+    /* Inline game counts in corners */
+    .game-count-inline {
+      display: block;
+      font-size: clamp(28px, 7vw, 56px);
+    }
+    .player-side { position: relative; }
+
+    .vs-divider { display: none; }
+
+    /* Tiebreak banner compact */
+    #tiebreak-banner {
+      padding: 8px 12px;
+      gap: 6px;
+    }
+    #tiebreak-banner .tb-label { font-size: 9px; }
+    .tb-btn { padding: 6px 14px; font-size: 12px; }
+    .tb-dismiss { font-size: 9px; }
+
+    #tiebreak-mode-label { font-size: 9px; padding: 0; }
+
+    /* Controls compact */
+    .controls { gap: 8px; }
+    .ctrl-btn { padding: 6px 12px; font-size: 10px; }
+    .keyboard-hint { font-size: 9px; }
+  }
 
   /* ── TIEBREAK BANNER ── */
   #tiebreak-banner {
@@ -385,12 +497,14 @@
         <div class="serve-dot" id="dot-me"></div>
         <div class="game-score" id="score-me">0</div>
         <div class="player-name" id="name-me">Player 1</div>
+        <div class="game-count-inline" id="games-me-inline">0</div>
       </div>
       <div class="vs-divider">VS</div>
       <div class="player-side" id="side-opp" onclick="awardPoint('opponent')">
         <div class="serve-dot" id="dot-opp"></div>
         <div class="game-score" id="score-opp">0</div>
         <div class="player-name" id="name-opp">Opponent</div>
+        <div class="game-count-inline" id="games-opp-inline">0</div>
       </div>
     </div>
     <div class="game-points-row">
@@ -705,8 +819,10 @@ function updateDisplay() {
   }
   document.getElementById('score-me').textContent  = meLabel;
   document.getElementById('score-opp').textContent = oppLabel;
-  document.getElementById('games-me').textContent  = state.meGames;
-  document.getElementById('games-opp').textContent = state.oppGames;
+  document.getElementById('games-me').textContent      = state.meGames;
+  document.getElementById('games-opp').textContent     = state.oppGames;
+  document.getElementById('games-me-inline').textContent  = state.meGames;
+  document.getElementById('games-opp-inline').textContent = state.oppGames;
   document.getElementById('dot-me').classList.toggle('visible',  state.serverIsMe);
   document.getElementById('dot-opp').classList.toggle('visible', !state.serverIsMe);
 
