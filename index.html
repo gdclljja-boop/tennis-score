@@ -500,6 +500,7 @@ function resetScores() {
 
 // ── TIEBREAK UI ──
 function showTiebreakBanner() {
+  if (state.meGames !== state.oppGames) return;
   state.awaitingNextGame = true;
   document.getElementById('tiebreak-banner').style.display = 'flex';
 }
@@ -645,10 +646,6 @@ function checkSetWin(afterTiebreak = false) {
 function handleSetWin(setWinner) {
   state.meSets.push(state.meGames);
   state.oppSets.push(state.oppGames);
-  const meSetsWon  = state.meSets.filter((s, i) => s > state.oppSets[i]).length;
-  const oppSetsWon = state.oppSets.filter((s, i) => s > state.meSets[i]).length;
-  if (meSetsWon  >= state.setsTarget) { updateDisplay(); endMatch('me');       return; }
-  if (oppSetsWon >= state.setsTarget) { updateDisplay(); endMatch('opponent'); return; }
   state.meGames = 0; state.oppGames = 0;
   state.serverIsMe = !state.serverIsMe;
   updateDisplay();
@@ -819,14 +816,31 @@ function announce(text, big) {
 }
 
 // ── CONTROLS ──
+// Single click = my point, double click = opponent's point
+// 400ms window to detect double click
+let clickTimer = null;
+let clickCount = 0;
+
+function handleRemoteClick() {
+  clickCount++;
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(() => {
+    const count = clickCount;
+    clickCount = 0;
+    clickTimer = null;
+    const onGame = document.getElementById('game-screen').style.display !== 'none';
+    if (!onGame) return;
+    if (count === 1) awardPoint('me');
+    if (count >= 2) awardPoint('opponent');
+  }, 400);
+}
+
 document.addEventListener('keydown', (e) => {
   const onGame = document.getElementById('game-screen').style.display !== 'none';
   if (!onGame) return;
-  if (e.key === 'Enter')                                 { e.preventDefault(); awardPoint('me'); }
-  if (e.key === 'AudioVolumeUp' || e.key === 'VolumeUp') { e.preventDefault(); awardPoint('opponent'); }
-  if (e.key === 'ArrowDown')                             { e.preventDefault(); awardPoint('me'); }
-  if (e.key === 'ArrowUp')                               { e.preventDefault(); awardPoint('opponent'); }
-  if (e.key === 'z' || e.key === 'Z')                    undoPoint();
+  if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); handleRemoteClick(); }
+  if (e.key === 'AudioVolumeUp' || e.key === 'VolumeUp' || e.key === 'ArrowUp') { e.preventDefault(); awardPoint('opponent'); }
+  if (e.key === 'z' || e.key === 'Z') undoPoint();
 });
 
 let lastGamepadState = {};
