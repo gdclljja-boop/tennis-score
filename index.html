@@ -914,12 +914,30 @@ function speakScore(isStart = false, isSet = false, setWinner = null, isGame = f
   speak(text);
 }
 
+// Silent AudioContext pulse to wake Bluetooth speaker before speech
+let audioCtx = null;
+function wakeBluetoothSpeaker(callback) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.35, audioCtx.sampleRate);
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer; // silent — all zeros
+    source.connect(audioCtx.destination);
+    source.start();
+    source.onended = callback;
+  } catch(e) {
+    callback(); // if AudioContext fails, speak anyway
+  }
+}
+
 function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.rate = 1.0; utt.pitch = 1.0; utt.volume = 1.0;
-  window.speechSynthesis.speak(utt);
+  wakeBluetoothSpeaker(() => {
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 1.0; utt.pitch = 1.0; utt.volume = 1.0;
+    window.speechSynthesis.speak(utt);
+  });
 }
 
 function announce(text, big) {
