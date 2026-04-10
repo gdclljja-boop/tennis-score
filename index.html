@@ -22,7 +22,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   body {
-    background: var(--court);
+    background: var(--blue);
     color: var(--text);
     font-family: 'DM Mono', monospace;
     min-height: 100vh;
@@ -34,32 +34,13 @@
     position: relative;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      linear-gradient(90deg, transparent 49.5%, rgba(232,224,200,0.15) 49.5%, rgba(232,224,200,0.15) 50.5%, transparent 50.5%),
-      linear-gradient(0deg, transparent 33%, rgba(232,224,200,0.1) 33%, rgba(232,224,200,0.1) 33.5%, transparent 33.5%),
-      linear-gradient(0deg, transparent 66%, rgba(232,224,200,0.1) 66%, rgba(232,224,200,0.1) 66.5%, transparent 66.5%);
-    pointer-events: none;
-  }
-
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    border: 12px solid rgba(232,224,200,0.15);
-    pointer-events: none;
-  }
-
   /* ── SETUP ── */
   #setup-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 28px;
-    padding: 32px 24px;
+    padding: 0 24px 32px;
     max-width: 420px;
     width: 100%;
     animation: fadeIn 0.5s ease;
@@ -76,11 +57,15 @@
   }
 
   .app-subtitle {
-    font-size: 11px;
+    font-family: 'Bebas Neue', cursive;
+    font-size: clamp(52px, 15vw, 88px);
     letter-spacing: 4px;
     text-transform: uppercase;
-    color: var(--dim);
-    margin-top: -20px;
+    color: var(--accent);
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+    line-height: 1;
+    text-align: center;
+    margin-top: 0;
   }
 
   .setup-card {
@@ -167,7 +152,6 @@
     animation: fadeIn 0.4s ease;
   }
 
-  /* Portrait: standard sets display */
   .sets-display {
     display: flex;
     justify-content: center;
@@ -176,94 +160,122 @@
   }
   .sets-display .sets-row { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .sets-display .player-name-small {
-    font-size: 10px; letter-spacing: 2px; color: var(--dim);
+    font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,0.5);
     text-transform: uppercase; font-family: 'DM Mono', monospace;
   }
   .sets-display .set-scores { display: flex; gap: 8px; }
   .set-box {
     background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(232,224,200,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: 2px;
     padding: 4px 10px;
     font-size: 20px;
     font-family: 'Bebas Neue', cursive;
     min-width: 36px;
     text-align: center;
-    color: var(--line);
+    color: rgba(255,255,255,0.75);
   }
   .set-box.current { border-color: rgba(245,200,66,0.4); }
   .set-box.won { border-color: var(--accent); color: var(--accent); }
 
+  /* Portrait scoreboard: two side-by-side panels like landscape */
   .scoreboard {
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(232,224,200,0.25);
-    border-radius: 4px;
+    background: none;
+    border: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
     width: 100%;
-    overflow: hidden;
   }
 
   .score-row {
-    display: grid;
-    grid-template-columns: 1fr 120px 1fr;
-    align-items: center;
-    padding: 0 12px;
+    display: contents;
   }
-  .score-row:first-child { border-bottom: 1px solid rgba(232,224,200,0.1); }
+  .score-row:first-child { border-bottom: none; }
 
   .player-side {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 20px 8px; gap: 6px; cursor: pointer;
-    transition: background 0.15s; border-radius: 3px;
+    background: var(--blue-dark);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 8px 20px;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
   }
-  .player-side:active { background: rgba(255,255,255,0.08); }
+  .player-side:active { background: var(--blue-light); }
 
-  .player-name { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim); text-align: center; }
+  .player-name {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+  }
 
   .game-score {
     font-family: 'Bebas Neue', cursive;
     font-size: clamp(64px, 18vw, 96px);
-    line-height: 1; color: var(--line); transition: all 0.2s;
+    line-height: 1;
+    color: #ffffff;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    transition: all 0.2s;
   }
 
   .serve-dot {
     width: 10px; height: 10px; border-radius: 50%;
-    background: var(--serve); box-shadow: 0 0 8px var(--serve);
+    background: #ffeb3b;
+    box-shadow: 0 0 8px #ffeb3b;
     opacity: 0; transition: opacity 0.3s;
   }
   .serve-dot.visible { opacity: 1; }
 
-  .vs-divider {
-    font-family: 'Bebas Neue', cursive; font-size: 16px;
-    letter-spacing: 2px; color: rgba(232,224,200,0.3); text-align: center;
-  }
+  .vs-divider { display: none; }
 
+  /* Games row spans both columns */
   .game-points-row {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    padding: 10px 20px; border-top: 1px solid rgba(232,224,200,0.1);
-    align-items: center; background: rgba(0,0,0,0.2);
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    padding: 10px 20px;
+    align-items: center;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
   }
-  .game-point { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); text-align: center; }
-  .game-points-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(136,136,136,0.5); text-align: center; }
+  .game-point {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+    font-family: 'Bebas Neue', cursive;
+  }
+  .game-points-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+  }
 
-  /* Inline game count — hidden in portrait, positioned in corners in landscape */
+  /* Inline game counts shown in portrait too */
   .game-count-inline {
-    display: none;
+    display: block;
     font-family: 'Bebas Neue', cursive;
     position: absolute;
     bottom: 10px;
+    font-size: clamp(22px, 5vw, 36px);
     color: rgba(255,255,255,0.75);
     line-height: 1;
   }
-  #games-me-inline  { left:  12px; }
-  #games-opp-inline { right: 12px; }
+  #games-me-inline  { left:  10px; }
+  #games-opp-inline { right: 10px; }
 
   /* ── LANDSCAPE LAYOUT ── */
   @media (orientation: landscape) and (max-height: 500px) {
-    body { background: var(--blue); justify-content: center; }
-
-    body::before { display: none; }
-    body::after  { display: none; }
-
     #game-screen {
       max-width: 100%;
       padding: 6px 10px;
@@ -273,81 +285,28 @@
       justify-content: center;
     }
 
-    /* Sets row compact across top */
-    .sets-display {
-      gap: 12px;
-      justify-content: center;
-    }
+    .sets-display { gap: 12px; justify-content: center; }
     .sets-display .player-name-small { font-size: 9px; }
     .set-box { font-size: 16px; padding: 2px 8px; min-width: 28px; }
 
-    /* Scoreboard: two giant panels side by side */
-    .scoreboard {
-      background: none;
-      border: none;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto;
-      gap: 8px;
-      width: 100%;
-    }
+    .scoreboard { gap: 8px; }
 
-    .score-row {
-      display: contents; /* let children slot into grid */
-    }
-    .score-row:first-child { border-bottom: none; }
+    .player-side { padding: 8px 12px; gap: 2px; }
 
-    .player-side {
-      background: var(--blue-dark);
-      border-radius: 8px;
-      padding: 8px 12px;
-      gap: 2px;
-      border: 2px solid rgba(255,255,255,0.15);
-    }
-    .player-side:active { background: var(--blue-light); }
+    .game-score { font-size: clamp(72px, 20vw, 140px); }
 
-    .game-score {
-      font-size: clamp(72px, 20vw, 140px);
-      color: #ffffff;
-      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
-    }
+    .player-name { font-size: 10px; }
 
-    .player-name {
-      font-size: 10px;
-      color: rgba(255,255,255,0.6);
-      letter-spacing: 2px;
-    }
-
-    .serve-dot {
-      width: 8px; height: 8px;
-      background: #ffeb3b;
-      box-shadow: 0 0 8px #ffeb3b;
-    }
-
-    /* Hide the games row in landscape — shown inline inside score panels instead */
     .game-points-row { display: none; }
 
-    /* Inline game counts in corners */
-    .game-count-inline {
-      display: block;
-      font-size: clamp(28px, 7vw, 56px);
-    }
-    .player-side { position: relative; }
+    .game-count-inline { font-size: clamp(28px, 7vw, 56px); }
 
-    .vs-divider { display: none; }
-
-    /* Tiebreak banner compact */
-    #tiebreak-banner {
-      padding: 8px 12px;
-      gap: 6px;
-    }
+    #tiebreak-banner { padding: 8px 12px; gap: 6px; }
     #tiebreak-banner .tb-label { font-size: 9px; }
     .tb-btn { padding: 6px 14px; font-size: 12px; }
     .tb-dismiss { font-size: 9px; }
-
     #tiebreak-mode-label { font-size: 9px; padding: 0; }
 
-    /* Controls compact */
     .controls { gap: 8px; }
     .ctrl-btn { padding: 6px 12px; font-size: 10px; }
     .keyboard-hint { font-size: 9px; }
@@ -392,18 +351,18 @@
   .controls { display: flex; gap: 12px; width: 100%; justify-content: center; }
 
   .ctrl-btn {
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(232,224,200,0.2);
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
     border-radius: 3px; color: var(--text); cursor: pointer;
     font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
     padding: 10px 16px; transition: all 0.15s; text-transform: uppercase;
   }
-  .ctrl-btn:hover { border-color: rgba(232,224,200,0.5); background: rgba(255,255,255,0.07); }
+  .ctrl-btn:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.07); }
   .undo-btn { color: var(--dim); }
   .reset-btn { color: var(--accent2); border-color: rgba(232,68,69,0.3); }
   .reset-btn:hover { border-color: var(--accent2); background: rgba(232,68,69,0.1); }
 
-  .keyboard-hint { font-size: 10px; letter-spacing: 2px; color: rgba(136,136,136,0.6); text-align: center; }
-  .keyboard-hint span { color: rgba(136,136,136,0.9); }
+  .keyboard-hint { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,0.35); text-align: center; }
+  .keyboard-hint span { color: rgba(255,255,255,0.6); }
 
   /* ── ANNOUNCEMENT ── */
   #announcement {
@@ -428,7 +387,7 @@
   .win-trophy { font-size: 72px; animation: bounce 1s ease infinite alternate; }
   .win-title { font-family: 'Bebas Neue', cursive; font-size: 56px; letter-spacing: 4px; color: var(--accent); }
   .win-subtitle { font-size: 14px; letter-spacing: 3px; color: var(--dim); text-transform: uppercase; }
-  .win-score { font-family: 'Bebas Neue', cursive; font-size: 28px; color: var(--line); letter-spacing: 3px; }
+  .win-score { font-family: 'Bebas Neue', cursive; font-size: 28px; color: #ffffff; letter-spacing: 3px; }
   .new-match-btn {
     background: var(--accent); border: none; border-radius: 3px; color: #1a1a1a;
     cursor: pointer; font-family: 'Bebas Neue', cursive; font-size: 24px;
@@ -499,7 +458,6 @@
         <div class="player-name" id="name-me">Player 1</div>
         <div class="game-count-inline" id="games-me-inline">0</div>
       </div>
-      <div class="vs-divider">VS</div>
       <div class="player-side" id="side-opp" onclick="awardPoint('opponent')">
         <div class="serve-dot" id="dot-opp"></div>
         <div class="game-score" id="score-opp">0</div>
@@ -648,7 +606,6 @@ function startTiebreak(target) {
 
 // ── AWARD POINT ──
 function awardPoint(who) {
-  // If the tiebreak banner is showing, pressing a score button means "no tiebreak" — dismiss and continue
   if (state.awaitingNextGame) hideTiebreakBanner();
   const snapshot = JSON.parse(JSON.stringify(state));
   snapshot.history = [];
@@ -684,7 +641,6 @@ function awardTiebreakPoint(who) {
   if (me) state.meTbPoints++; else state.oppTbPoints++;
   state.tbPointCount++;
 
-  // Serve rotation: 1st player serves 1, then alternate every 2
   if (state.tbPointCount === 1) {
     state.serverIsMe = !state.tbServerIsMe;
   } else if (state.tbPointCount > 1 && (state.tbPointCount - 1) % 2 === 0) {
@@ -737,7 +693,6 @@ function winTiebreak(who) {
   const setWinner = checkSetWin(true);
   if (setWinner !== null) { updateDisplay(); handleSetWin(setWinner); return; }
 
-  // Player who received first in TB serves first next game
   state.serverIsMe = !tbServerWasMe;
   updateDisplay();
   showTiebreakBanner();
@@ -746,12 +701,10 @@ function winTiebreak(who) {
 // ── SET WIN ──
 function checkSetWin(afterTiebreak = false) {
   const mg = state.meGames, og = state.oppGames;
-  // After a tiebreak the winner has exactly one more game — end the set immediately
   if (afterTiebreak) {
     if (mg > og) return 'me';
     if (og > mg) return 'opponent';
   }
-  // Set ends when a player reaches 6+ and leads by 2
   if (mg >= 6 && mg - og >= 2) return 'me';
   if (og >= 6 && og - mg >= 2) return 'opponent';
   return null;
@@ -782,14 +735,13 @@ function undoPoint() {
 }
 
 function reannounceScore() {
-  // Re-speak the current score after an undo
   setTimeout(() => {
     if (state.inTiebreak) {
       speakTiebreak();
     } else {
       speakScore();
     }
-  }, 600); // short pause after "UNDO" announcement
+  }, 600);
 }
 
 function confirmReset() {
@@ -900,7 +852,6 @@ function speakScore(isStart = false, isSet = false, setWinner = null, isGame = f
     speak(`Game ${gameWinner}. ${gamesText}`); return;
   }
 
-  // Normal point
   if (state.inDeuce) {
     if (state.meAdvantage) {
       text = state.serverIsMe ? 'Advantage Server' : 'Advantage Receiver';
@@ -925,19 +876,18 @@ function speakScore(isStart = false, isSet = false, setWinner = null, isGame = f
   speak(text);
 }
 
-// Silent AudioContext pulse to wake Bluetooth speaker before speech
 let audioCtx = null;
 function wakeBluetoothSpeaker(callback) {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.35, audioCtx.sampleRate);
     const source = audioCtx.createBufferSource();
-    source.buffer = buffer; // silent — all zeros
+    source.buffer = buffer;
     source.connect(audioCtx.destination);
     source.start();
     source.onended = callback;
   } catch(e) {
-    callback(); // if AudioContext fails, speak anyway
+    callback();
   }
 }
 
@@ -961,8 +911,6 @@ function announce(text, big) {
 }
 
 // ── CONTROLS ──
-// Single click = my point, double click = opponent's point
-// 400ms window to detect double click
 let clickTimer = null;
 let clickCount = 0;
 
